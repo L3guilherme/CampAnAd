@@ -35,7 +35,7 @@ import kotlin.coroutines.Continuation;
 public class workerCam535 extends CoroutineWorker {
 
     boolean run = true;
-
+    boolean oFim = false;
     String ip;
     int porta;
     String status;
@@ -47,8 +47,6 @@ public class workerCam535 extends CoroutineWorker {
     public workerCam535(@NonNull Context appContext, @NonNull WorkerParameters params) {
         super(appContext, params);
     }
-
-    MediaPlayer mp;
 
     private BroadcastReceiver aLBReceiver = new BroadcastReceiver() {
         @Override
@@ -72,7 +70,7 @@ public class workerCam535 extends CoroutineWorker {
         @Override
         public void onReceive(Context context, Intent intent) {
             run= false;
-            //close();
+            oFim = true;
             Log.d("UDP", "STOP");
         }
     };
@@ -80,6 +78,9 @@ public class workerCam535 extends CoroutineWorker {
     @Nullable
     @Override
     public Object doWork(@NonNull Continuation<? super Result> continuation) {
+
+        Log.d("Udp", "Socket Check INIT");
+
         LocalBroadcastManager.getInstance(getApplicationContext()).registerReceiver(stopReceiver,
                 new IntentFilter("STOP"));
         LocalBroadcastManager.getInstance(getApplicationContext()).registerReceiver(aLBReceiver,
@@ -88,15 +89,16 @@ public class workerCam535 extends CoroutineWorker {
         LocalBroadcastManager.getInstance(getApplicationContext()).registerReceiver(recReceiver,
                 new IntentFilter("REC"));
 
-        mp= MediaPlayer.create(getApplicationContext(),R.raw.mario_ring);
+
 
         String ip_in = getInputData().getString("IP");
         int porta_in = getInputData().getInt("PT", 0);
 
         this.ip = ip_in;//"192.168.15.253";
         this.porta = porta_in;//4453;
+        oFim = false;
 
-        Log.d("Udp", "Socket Check INIT");
+        Log.d("Udp", "Socket INIT OK");
 
 
         StartF();
@@ -128,16 +130,18 @@ public class workerCam535 extends CoroutineWorker {
 
         }
 
-        PeriodicWorkRequest campRequest =
-                new PeriodicWorkRequest.Builder(workerCam535.class, 1, TimeUnit.SECONDS)
-                        .setInputData(
-                                new Data.Builder()
-                                        .putString("IP", ip)
-                                        .putInt("PT", porta)
-                                        .build())
-                        .build();
+        if (!oFim) {
+            PeriodicWorkRequest campRequest =
+                    new PeriodicWorkRequest.Builder(workerCam535.class, 1, TimeUnit.SECONDS)
+                            .setInputData(
+                                    new Data.Builder()
+                                            .putString("IP", ip)
+                                            .putInt("PT", porta)
+                                            .build())
+                            .build();
 
-        WorkManager.getInstance(getApplicationContext()).enqueue(campRequest);
+            WorkManager.getInstance(getApplicationContext()).enqueue(campRequest);
+        }
         Log.i("UDP", "FIM!");
         return Result.success();
     }
@@ -178,9 +182,18 @@ public class workerCam535 extends CoroutineWorker {
 
                 String text = new String(message, 0, packetR.getLength());
                 if (text.indexOf("#!:CAPON:!#") == 0) {
+                    MediaPlayer mp = MediaPlayer.create(getApplicationContext(),R.raw.mario_ring);
                     mp.start();
                     Notificar();
                     Enviar("#!:CAMPOK:!#");
+                    while(mp.isPlaying()){
+                        try {
+                            Thread.sleep(1000);
+                        } catch (InterruptedException e) {
+                            e.printStackTrace();
+                        }
+                    }
+                    mp.release();
                 }
 
                 if (text.indexOf("#!:PINGOK:!#") == 0) {

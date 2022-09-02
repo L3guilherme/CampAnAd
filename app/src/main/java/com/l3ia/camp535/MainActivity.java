@@ -67,7 +67,9 @@ public class MainActivity extends AppCompatActivity {
         }
 
 //        intentSevice = new Intent(ctx, serviceCamp535.class);
-//        startService(intentSevice);
+//        if (!isMyServiceRunning(serviceCamp535.class)) {
+//            startService(intentSevice);
+//        }
 
 
 
@@ -92,28 +94,26 @@ public class MainActivity extends AppCompatActivity {
             public void onClick(View view) {
                 Snackbar.make(view, "Reg!", Snackbar.LENGTH_LONG)
                         .setAction("Action", null).show();
+                EditText txt_ip = (EditText)findViewById(R.id.txt_IP);
+                EditText txt_porta = (EditText)findViewById(R.id.txt_porta);
+
+                PeriodicWorkRequest campRequest =
+                        new PeriodicWorkRequest.Builder(workerCam535.class, 1, TimeUnit.SECONDS)
+                                .setInputData(
+                                        new Data.Builder()
+                                                .putString("IP", String.valueOf(txt_ip.getText()))
+                                                .putInt("PT", Integer.parseInt(String.valueOf(txt_porta.getText())))
+                                                .build())
+                                .build();
+
+                WorkManager.getInstance(getApplicationContext()).enqueue(campRequest);
+                //WorkManager.getInstance(this).enqueueUniquePeriodicWork("camp535", ExistingPeriodicWorkPolicy.REPLACE,campRequest);
                 Intent intent = new Intent("REG");
-                //intent.putExtra("acc", "play");
                 LocalBroadcastManager.getInstance(ctx).sendBroadcast(intent);
+                Log.i("UDP", "REG!");
             }
         });
 
-        EditText txt_ip = (EditText)findViewById(R.id.txt_IP);
-        EditText txt_porta = (EditText)findViewById(R.id.txt_porta);
-
-        PeriodicWorkRequest campRequest =
-                new PeriodicWorkRequest.Builder(workerCam535.class, 1, TimeUnit.SECONDS)
-                        .setInputData(
-                                new Data.Builder()
-                                        .putString("IP", String.valueOf(txt_ip.getText()))
-                                        .putInt("PT", Integer.parseInt(String.valueOf(txt_porta.getText())))
-                                        .build())
-                        .build();
-
-        WorkManager.getInstance(this).enqueue(campRequest);
-        //WorkManager.getInstance(this).enqueueUniquePeriodicWork("camp535", ExistingPeriodicWorkPolicy.REPLACE,campRequest);
-
-        NotificationCompat.Builder builder;
 
         Log.i("UDP", "onCreate");
 
