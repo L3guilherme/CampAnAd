@@ -175,8 +175,8 @@ void play_song(){
 
 int sinal_camp = 13;
 #ifndef STASSID
-#define STASSID "L3Com"
-#define STAPSK  "Lg@viv#513"
+#define STASSID ""
+#define STAPSK  ""
 #endif
 
 unsigned int localPort = 4453;      // local port to listen on
